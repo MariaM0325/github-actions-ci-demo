@@ -40,6 +40,10 @@ El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en
 4. Linting con ESLint.
 5. Ejecución de las pruebas con Jest y generación del reporte de cobertura, publicado como artifact.
 
+## Protección de rama
+
+La rama `main` está protegida: exige que los checks `build-and-test (18)` y `build-and-test (20)` pasen antes de permitir un merge. El force push y la eliminación de la rama están bloqueados.
+
 ## Documentación del Laboratorio
 
 Puedes encontrar el informe completo con capturas de pantalla y evidencias en el siguiente enlace:
