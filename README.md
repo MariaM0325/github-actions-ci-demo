@@ -42,7 +42,7 @@ El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en
 
 ## Protección de rama
 
-La rama `main` está protegida: exige que los checks `build-and-test (18)` y `build-and-test (20)` pasen antes de permitir un merge. El force push y la eliminación de la rama están bloqueados.
+La rama `main` está protegida: exige que los checks `build-and-test (18)` y `build-and-test (20)` pasen antes de permitir un merge. El force push y la eliminación de la rama están bloqueados. La regla se configuró mediante la API de GitHub.
 
 ## Documentación del Laboratorio
 
