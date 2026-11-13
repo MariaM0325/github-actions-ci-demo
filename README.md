@@ -1,5 +1,7 @@
 # github-actions-ci-demo
 
+[![CI con Matriz](https://github.com/MariaM0325/github-actions-ci-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/MariaM0325/github-actions-ci-demo/actions/workflows/ci.yml)
+
 Aplicación mínima en **Node.js + Express** con pruebas automatizadas mediante **Jest** y **Supertest**, utilizada para demostrar la creación de un pipeline de Integración Continua (CI) con **GitHub Actions**.
 
 ## Tecnologías
