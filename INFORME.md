@@ -2,12 +2,16 @@
 
 ## 1. Descripción del proyecto
 
-`github-actions-ci-demo` es una API mínima desarrollada con **Node.js** y **Express** que expone dos endpoints:
+`github-actions-ci-demo` es una API mínima desarrollada con **Node.js** y **Express** que implementa un CRUD de usuarios en memoria:
 
 - `GET /health`: responde `{ "status": "ok" }`.
-- `GET /users`: responde una lista con dos usuarios.
+- `GET /users`: devuelve la lista de usuarios.
+- `GET /users/:id`: devuelve un usuario por su identificador.
+- `POST /users`: crea un usuario a partir de `{ "name": "..." }`.
+- `PUT /users/:id`: actualiza el nombre de un usuario.
+- `DELETE /users/:id`: elimina un usuario.
 
-Las pruebas unitarias/de integración se implementan con **Jest** y **Supertest**.
+Las pruebas unitarias/de integración se implementan con **Jest** y **Supertest**, e incluyen los casos exitosos y los errores de validación (`400`) y recurso inexistente (`404`).
 
 ## 2. Pipeline configurado
 
@@ -29,7 +33,7 @@ La matriz genera dos jobs en paralelo, uno por cada versión de Node.js.
 
 | Comando | Resultado |
 | ------- | --------- |
-| `npm test` | 2 pruebas aprobadas, 0 fallidas. |
+| `npm test` | 12 pruebas aprobadas, 0 fallidas. |
 | `npm run lint` | Sin errores. |
 | `npm run lint` con una variable no utilizada | Falla con `no-unused-vars`, como se espera. |
 | `npm run test:coverage` | 100 % en sentencias, ramas, funciones y líneas. |
@@ -51,6 +55,8 @@ La matriz genera dos jobs en paralelo, uno por cada versión de Node.js.
 La ejecución exitosa completó los jobs `build-and-test (18)` y `build-and-test (20)` con resultado `success`. Cada job ejecuta `npm run test:coverage` y publica el reporte como artifact (`cobertura-node-18` y `cobertura-node-20`). La cobertura es del 100 % en sentencias, ramas, funciones y líneas.
 
 ![Workflow exitoso con artifacts de cobertura](./img/workflow-exitoso.png)
+
+> La captura corresponde a una ejecución previa a la incorporación del CRUD. La suite actual tiene 12 pruebas y mantiene el 100 % de cobertura.
 
 ### 4.3 Detalle de un workflow fallido
 

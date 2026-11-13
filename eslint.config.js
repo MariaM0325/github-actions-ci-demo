@@ -18,6 +18,8 @@ module.exports = [
         describe: 'readonly',
         test: 'readonly',
         expect: 'readonly',
+        beforeEach: 'readonly',
+        jest: 'readonly',
       },
     },
   },

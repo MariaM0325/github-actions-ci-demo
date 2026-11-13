@@ -2,7 +2,7 @@
 
 [![CI con Matriz](https://github.com/MariaM0325/github-actions-ci-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/MariaM0325/github-actions-ci-demo/actions/workflows/ci.yml)
 
-Aplicación mínima en **Node.js + Express** con pruebas automatizadas mediante **Jest** y **Supertest**, utilizada para demostrar la creación de un pipeline de Integración Continua (CI) con **GitHub Actions**.
+Aplicación mínima en **Node.js + Express** con CRUD de usuarios en memoria y pruebas automatizadas mediante **Jest** y **Supertest**, utilizada para demostrar la creación de un pipeline de Integración Continua (CI) con **GitHub Actions**.
 
 ## Tecnologías
 
@@ -14,10 +14,14 @@ Aplicación mínima en **Node.js + Express** con pruebas automatizadas mediante 
 
 ## Endpoints
 
-| Método | Ruta      | Descripción                          |
-| ------ | --------- | ------------------------------------ |
-| GET    | `/health` | Verifica el estado del servicio       |
-| GET    | `/users`  | Devuelve una lista de usuarios        |
+| Método | Ruta          | Descripción                                      |
+| ------ | ------------- | ------------------------------------------------ |
+| GET    | `/health`     | Verifica el estado del servicio                   |
+| GET    | `/users`      | Devuelve la lista de usuarios                     |
+| GET    | `/users/:id`  | Devuelve un usuario por su identificador          |
+| POST   | `/users`      | Crea un usuario (`{ "name": "..." }`)             |
+| PUT    | `/users/:id`  | Actualiza el nombre de un usuario                 |
+| DELETE | `/users/:id`  | Elimina un usuario                                |
 
 ## Uso local
 
