@@ -44,17 +44,34 @@ La matriz genera dos jobs en paralelo, uno por cada versión de Node.js.
 - Ejecución fallida intencional (lint): <https://github.com/MariaM0325/github-actions-ci-demo/actions/runs/43359583034>
 - Ejecución exitosa tras la corrección: <https://github.com/MariaM0325/github-actions-ci-demo/actions/runs/43359711013>
 
+![Historial de ejecuciones en GitHub Actions](./img/actions-historial.png)
+
 ### 4.2 Detalle de un workflow exitoso con cobertura
 
 La ejecución exitosa completó los jobs `build-and-test (18)` y `build-and-test (20)` con resultado `success`. Cada job ejecuta `npm run test:coverage` y publica el reporte como artifact (`cobertura-node-18` y `cobertura-node-20`). La cobertura es del 100 % en sentencias, ramas, funciones y líneas.
+
+![Workflow exitoso con artifacts de cobertura](./img/workflow-exitoso.png)
 
 ### 4.3 Detalle de un workflow fallido
 
 La ejecución fallida se produjo al introducir la variable `unusedVariable` en `app.js`; el paso de linting falló con la regla `no-unused-vars`. Tras revertir el cambio, el workflow volvió a pasar.
 
+![Workflow fallido por error de linting](./img/workflow-fallido.png)
+
 ### 4.4 Regla de protección de rama
 
-Pendiente de configurar en **Settings > Branches > Add rule** sobre `main`, habilitando **Require status checks to pass before merging** y seleccionando el workflow `CI con Matriz`. Requiere acceso a la interfaz de GitHub.
+Regla configurada sobre `main` mediante la API de GitHub:
+
+| Ajuste | Valor |
+| ------ | ----- |
+| Checks obligatorios | `build-and-test (18)` y `build-and-test (20)` |
+| Ramas actualizadas antes del merge | No |
+| Revisiones obligatorias | No |
+| Enforce admins | No |
+| Force push | Bloqueado |
+| Eliminación de la rama | Bloqueada |
+
+> La captura visual de `Settings > Branches` se puede añadir manualmente con una sesión iniciada en GitHub.
 
 ## 5. Conclusiones
 
