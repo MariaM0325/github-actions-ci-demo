@@ -73,9 +73,18 @@ Regla configurada sobre `main` mediante la API de GitHub:
 
 > La captura visual de `Settings > Branches` se puede añadir manualmente con una sesión iniciada en GitHub.
 
+### 4.5 Pull request con protección de rama
+
+Se creó el PR [#1](https://github.com/MariaM0325/github-actions-ci-demo/pull/1) desde `feature/prueba-proteccion` hacia `main`. Mientras los checks estaban en ejecución, GitHub reportó el merge como bloqueado (`mergeable_state: blocked`); tras aprobarse `build-and-test (18)` y `build-and-test (20)`, el PR se fusionó mediante la API en el commit `c64e83c`.
+
+![Checks del PR en ejecución](./img/pr-checks-en-progreso.png)
+
+![Pull request fusionado con los checks aprobados](./img/pr-merged.png)
+
 ## 5. Conclusiones
 
 - GitHub Actions permite automatizar la verificación del código en cada cambio sin infraestructura propia.
 - El linting detecta errores de estilo y variables no utilizadas antes de llegar a producción.
 - Las matrices de ejecución garantizan compatibilidad con varias versiones de Node.js.
 - La protección de rama obliga a que el pipeline pase antes de integrar cambios, mejorando la calidad del repositorio.
+- La regla se validó con un PR real: el merge permaneció bloqueado hasta que ambos checks del pipeline pasaron.
