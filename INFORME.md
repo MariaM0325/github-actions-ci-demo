@@ -36,23 +36,25 @@ La matriz genera dos jobs en paralelo, uno por cada versión de Node.js.
 
 ## 4. Evidencias
 
-> Sustituye cada marcador por la captura correspondiente una vez subido el repositorio a GitHub.
+> Los enlaces directos a cada ejecución se incluyen a continuación. Las capturas de pantalla se pueden añadir desde la pestaña **Actions**.
 
 ### 4.1 Historial de ejecuciones en la pestaña Actions
 
-_(Pendiente: captura del historial de workflows exitosos y fallidos.)_
+- Ejecución exitosa inicial: <https://github.com/MariaM0325/github-actions-ci-demo/actions/runs/43359413037>
+- Ejecución fallida intencional (lint): <https://github.com/MariaM0325/github-actions-ci-demo/actions/runs/43359583034>
+- Ejecución exitosa tras la corrección: <https://github.com/MariaM0325/github-actions-ci-demo/actions/runs/43359711013>
 
 ### 4.2 Detalle de un workflow exitoso con cobertura
 
-_(Pendiente: ejecutar `npm run test:coverage` en CI o localmente y capturar el reporte de cobertura.)_
+La ejecución exitosa completó los jobs `build-and-test (18)` y `build-and-test (20)` con resultado `success`. La cobertura local con `npm run test:coverage` fue del 100 % en sentencias, ramas, funciones y líneas.
 
 ### 4.3 Detalle de un workflow fallido
 
-_(Pendiente: captura del job fallido. Para reproducirlo se puede introducir una variable no utilizada en `app.js` y ejecutar `npm run lint`.)_
+La ejecución fallida se produjo al introducir la variable `unusedVariable` en `app.js`; el paso de linting falló con la regla `no-unused-vars`. Tras revertir el cambio, el workflow volvió a pasar.
 
 ### 4.4 Regla de protección de rama
 
-_(Pendiente: captura de Settings > Branches > regla sobre `main` con "Require status checks to pass before merging" habilitado.)_
+Pendiente de configurar en **Settings > Branches > Add rule** sobre `main`, habilitando **Require status checks to pass before merging** y seleccionando el workflow `CI con Matriz`. Requiere acceso a la interfaz de GitHub.
 
 ## 5. Conclusiones
 
