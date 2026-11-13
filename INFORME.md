@@ -77,8 +77,6 @@ Regla configurada sobre `main` mediante la API de GitHub:
 | Force push | Bloqueado |
 | Eliminación de la rama | Bloqueada |
 
-> La captura visual de `Settings > Branches` se puede añadir manualmente con una sesión iniciada en GitHub.
-
 ### 4.5 Pull request con protección de rama
 
 Se creó el PR [#1](https://github.com/MariaM0325/github-actions-ci-demo/pull/1) desde `feature/prueba-proteccion` hacia `main`. Mientras los checks estaban en ejecución, GitHub reportó el merge como bloqueado (`mergeable_state: blocked`); tras aprobarse `build-and-test (18)` y `build-and-test (20)`, el PR se fusionó mediante la API en el commit `c64e83c`.
