@@ -36,7 +36,7 @@ El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en
 2. Configuración de Node.js (matriz con las versiones 18 y 20).
 3. Instalación de dependencias con `npm ci`.
 4. Linting con ESLint.
-5. Ejecución de las pruebas con Jest.
+5. Ejecución de las pruebas con Jest y generación del reporte de cobertura, publicado como artifact.
 
 ## Documentación del Laboratorio
 

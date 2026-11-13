@@ -19,7 +19,7 @@ El workflow se encuentra en `.github/workflows/ci.yml` y se dispara con eventos 
 | Setup | Configura Node.js con `actions/setup-node@v6` usando una matriz de versiones 18 y 20. |
 | Instalación | Ejecuta `npm ci` para instalar las versiones exactas del `package-lock.json`. |
 | Linting | Ejecuta `npm run lint` con ESLint. |
-| Pruebas | Ejecuta `npm test` con Jest. |
+| Pruebas y cobertura | Ejecuta `npm run test:coverage` con Jest y publica el reporte como artifact. |
 
 La matriz genera dos jobs en paralelo, uno por cada versión de Node.js.
 
@@ -46,7 +46,7 @@ La matriz genera dos jobs en paralelo, uno por cada versión de Node.js.
 
 ### 4.2 Detalle de un workflow exitoso con cobertura
 
-La ejecución exitosa completó los jobs `build-and-test (18)` y `build-and-test (20)` con resultado `success`. La cobertura local con `npm run test:coverage` fue del 100 % en sentencias, ramas, funciones y líneas.
+La ejecución exitosa completó los jobs `build-and-test (18)` y `build-and-test (20)` con resultado `success`. Cada job ejecuta `npm run test:coverage` y publica el reporte como artifact (`cobertura-node-18` y `cobertura-node-20`). La cobertura es del 100 % en sentencias, ramas, funciones y líneas.
 
 ### 4.3 Detalle de un workflow fallido
 
