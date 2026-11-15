@@ -12,6 +12,7 @@ describe('API Tests', () => {
     const res = await request(app).get('/health');
     expect(res.statusCode).toBe(200);
     expect(res.body.status).toBe('ok');
+    expect(res.body.version).toBe('2.0.0');
   });
 
   test('GET /users debe retornar una lista de usuarios', async () => {
