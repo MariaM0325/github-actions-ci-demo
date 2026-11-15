@@ -72,6 +72,10 @@ Los jobs de despliegue se ejecutan en un **runner self-hosted** (`ryzen5-docker`
 - Staging: <http://localhost:8080/health>
 - Producción: <http://localhost:8081/health>
 
+### Runner self-hosted
+
+El runner `ryzen5-docker` se inicia automáticamente al iniciar sesión mediante `github-runner.vbs` en la carpeta Startup del usuario. El script espera a que Docker Desktop esté disponible y reinicia el listener si se detiene. Registro: `C:\actions-runner\startup.log`.
+
 ### Credenciales
 
 No se requieren secretos manuales: GHCR usa el `GITHUB_TOKEN` automático con permisos `packages: write` (build) y `packages: read` (deploy). Los entornos `staging` y `production` ya están creados en el repositorio.

@@ -107,6 +107,8 @@ Resultados obtenidos:
 | Sintaxis del workflow | `cd.yml` validado con Prettier (parser YAML). |
 | Runner self-hosted | `ryzen5-docker` en línea con etiquetas `self-hosted, Windows, X64, docker, local`. |
 
+El runner se inicia automáticamente al iniciar sesión mediante `github-runner.vbs` (carpeta Startup del usuario). El script `C:\actions-runner\start-runner.ps1` espera hasta 5 minutos a que Docker Desktop esté disponible, inicia el listener de forma oculta y lo reinicia si se detiene. El registro queda en `C:\actions-runner\startup.log`.
+
 ## 6. Evidencias del pipeline en GitHub Actions
 
 ### 6.1 Ejecución exitosa
@@ -234,7 +236,7 @@ El health check y el etiquetado por SHA son estrategias complementarias: el prim
 ## 9. Checklist del despliegue
 
 1. ~~Crear entornos `staging` y `production`~~ (completado).
-2. ~~Registrar el runner self-hosted `ryzen5-docker`~~ (completado, en línea).
+2. ~~Registrar el runner self-hosted `ryzen5-docker`~~ (completado, en línea y con arranque automático al iniciar sesión).
 3. ~~Hacer commit y push del workflow actualizado y este informe~~ (completado, commit `bd13538`).
 4. ~~Verificar la ejecución exitosa en la pestaña Actions~~ (completado).
 5. ~~Validar `http://localhost:8080/health` y `http://localhost:8081/health`~~ (completado, ambos 200).
