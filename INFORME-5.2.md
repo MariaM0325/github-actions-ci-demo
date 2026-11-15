@@ -4,37 +4,48 @@
 
 Se reutiliza la API CRUD de usuarios del Laboratorio 5.1 (`github-actions-ci-demo`), desarrollada con **Node.js + Express** y probada con **Jest + Supertest**. La aplicación expone `/health` (requisito para el health check del despliegue) y el CRUD completo en `/users`.
 
-El objetivo de este laboratorio es contenerizar la aplicación con una imagen Docker optimizada y automatizar el ciclo **build → push → deploy** mediante GitHub Actions.
+El objetivo del laboratorio es contenerizar la aplicación con una imagen Docker optimizada y automatizar el ciclo **build → push → deploy** mediante GitHub Actions.
+
+### Adaptación de infraestructura
+
+El laboratorio propone Docker Hub y una instancia EC2. En este entorno no se dispone de cuenta de Docker Hub ni de un servidor remoto, por lo que se usaron equivalentes funcionales:
+
+| Requisito original | Implementación realizada |
+| --- | --- |
+| Registro Docker Hub | **GitHub Container Registry (GHCR)** con el `GITHUB_TOKEN` integrado. |
+| Servidor EC2 con Docker | **Runner self-hosted** en este PC con Docker Desktop. |
+| Secretos SSH y de Docker Hub | No se requieren: GHCR usa el token efímero de GitHub y el despliegue se ejecuta en el runner local. |
+| Puerto público 80 | Staging en **8080** y producción en **8081** (Windows bloquea el puerto 80 sin privilegios elevados). |
 
 ## 2. Arquitectura del pipeline
 
 El workflow [`.github/workflows/cd.yml`](.github/workflows/cd.yml) se ejecuta con `push` y `pull_request` sobre `main`, además de `workflow_dispatch`. Incluye concurrencia por rama para evitar despliegues simultáneos.
 
-| Job | Depende de | Entorno | Acciones principales |
+| Job | Runner | Entorno | Acciones principales |
 | --- | --- | --- | --- |
-| `build-and-push` | — | — | Checkout, Buildx, login en Docker Hub (solo en push), build multi-stage, push con etiquetas `github.sha` y `latest`, caché de GitHub Actions y escaneo Trivy. |
-| `deploy-staging` | `build-and-push` | `staging` | Conexión SSH, `docker pull`, ejecución del contenedor nuevo en el puerto 3001, health check y activación en el puerto 8080. |
-| `deploy-production` | `deploy-staging` | `production` | Conexión SSH, contenedor nuevo en el puerto 3001, health check y activación en el puerto 80. Requiere aprobación manual si se configura "Required reviewers" en el entorno. |
+| `build-and-push` | `ubuntu-latest` | — | Checkout, Buildx, login a GHCR (solo en push), build multi-stage, push con etiquetas `github.sha` y `latest`, descarga de la imagen y escaneo Trivy. |
+| `deploy-staging` | `self-hosted, docker` | `staging` | Login a GHCR, `docker pull`, contenedor nuevo en el puerto 3001, health check y activación en el puerto 8080. |
+| `deploy-production` | `self-hosted, docker` | `production` | Login a GHCR, contenedor nuevo en el puerto 3001, health check y activación en el puerto 8081. |
 
 Flujo resultante:
 
 ```
 push a main
-   └─ build-and-push (build + push + Trivy)
+   └─ build-and-push (build + push a GHCR + Trivy)
         └─ deploy-staging (health check en 3001 → activo en 8080)
-             └─ deploy-production (health check en 3001 → activo en 80)
+             └─ deploy-production (health check en 3001 → activo en 8081)
 ```
 
 En los `pull_request` solo se construye la imagen localmente (sin push ni login), de modo que el pipeline valida los cambios sin publicar artefactos desde forks.
 
 ### Puertos por entorno
 
-| Entorno | Contenedor activo | Contenedor de validación | Puerto público |
+| Entorno | Contenedor activo | Contenedor de validación | URL local |
 | --- | --- | --- | --- |
-| `staging` | `mi-app-staging` | `mi-app-staging-new` (3001) | 8080 |
-| `production` | `mi-app` | `mi-app-new` (3001) | 80 |
+| `staging` | `mi-app-staging` | `mi-app-staging-new` (3001) | <http://localhost:8080/health> |
+| `production` | `mi-app` | `mi-app-new` (3001) | <http://localhost:8081/health> |
 
-Los puertos de validación se usan de forma secuencial (`staging` → `production`), por lo que no colisionan. Si cada entorno usa un servidor distinto, los puertos pueden coincidir.
+Los puertos de validación se usan de forma secuencial (`staging` → `production`), por lo que no colisionan.
 
 ## 3. Dockerfile y decisiones técnicas
 
@@ -47,39 +58,26 @@ Los puertos de validación se usan de forma secuencial (`staging` → `productio
 
 Otras decisiones:
 
-- **Etiquetado por SHA**: cada imagen se publica como `USUARIO/mi-app:<sha-completo>` y `USUARIO/mi-app:latest`. El SHA es la base del rollback; `latest` simplifica el despliegue normal.
+- **Etiquetado por SHA**: cada imagen se publica como `ghcr.io/mariam0325/mi-app:<sha-completo>` y `ghcr.io/mariam0325/mi-app:latest`. El SHA es la base del rollback; `latest` simplifica el despliegue normal.
 - **Despliegue con health check**: el contenedor nuevo se levanta en el puerto 3001 y el contenedor activo no se reemplaza hasta que `/health` responde 200. Si falla, el script termina con código 1 y la versión anterior sigue sirviendo.
-- **GitHub Environments**: `staging` y `production` permiten secretos SSH distintos por entorno y reglas de aprobación en `production`.
-- **Trivy**: escaneo de vulnerabilidades `CRITICAL,HIGH` en el sistema operativo y librerías. Se configuró `exit-code: '0'` para que el informe no bloquee el pipeline, tal como plantea el laboratorio; en un proyecto real conviene cambiarlo a `'1'` cuando el equipo tenga un umbral de aceptación definido.
+- **GitHub Environments**: `staging` y `production` se crearon mediante la API de GitHub. Permiten asociar reglas o secretos propios por entorno; en esta implementación no se necesitan secretos adicionales.
+- **Trivy**: escaneo de vulnerabilidades `CRITICAL,HIGH` en el sistema operativo y librerías. Se configuró `exit-code: '0'` para que el informe no bloquee el pipeline, tal como plantea el laboratorio; en un proyecto real conviene cambiarlo a `'1'`.
 - **Caché `type=gha`**: acelera builds sucesivos reutilizando capas entre ejecuciones.
-- **`vars.IMAGE_NAME` opcional**: si se define la variable de repositorio, se usa como nombre de imagen; si no, se deriva de `secrets.DOCKER_USERNAME` (`USUARIO/mi-app`).
+- **`vars.IMAGE_NAME` opcional**: si se define la variable de repositorio, se usa como nombre de imagen; si no, se usa `ghcr.io/mariam0325/mi-app`.
+- **Permisos mínimos del token**: `packages: write` solo en `build-and-push` y `packages: read` en los jobs de despliegue.
 
-## 4. Secretos y variables requeridos
+## 4. Secretos y entornos
 
-### Secretos de repositorio (Settings > Secrets and variables > Actions)
+Con GHCR y el runner self-hosted **no se requieren secretos manuales**:
 
-| Nombre | Uso |
+| Recurso | Estado |
 | --- | --- |
-| `DOCKER_USERNAME` | Usuario de Docker Hub. |
-| `DOCKER_PASSWORD` | Access Token de Docker Hub (no la contraseña principal). |
+| Entorno `staging` | Creado en el repositorio. |
+| Entorno `production` | Creado en el repositorio. |
+| `GITHUB_TOKEN` | Proporcionado automáticamente por GitHub en cada ejecución. |
+| Variable opcional `IMAGE_NAME` | No definida; se usa el valor por defecto del workflow. |
 
-### Variable de repositorio (opcional)
-
-| Nombre | Uso |
-| --- | --- |
-| `IMAGE_NAME` | Nombre completo de la imagen, por ejemplo `USUARIO/mi-app`. |
-
-### Secretos por entorno (Settings > Environments)
-
-Configurados de forma independiente en `staging` y `production`:
-
-| Nombre | Uso |
-| --- | --- |
-| `SSH_HOST` | IP pública o dominio del servidor. |
-| `SSH_USER` | Usuario SSH (`ubuntu`, `ec2-user`, etc.). |
-| `SSH_PRIVATE_KEY` | Contenido completo de la llave privada `.pem`. |
-
-> **Estado actual:** estos secretos aún no están configurados en el repositorio y no se dispone de una instancia EC2 ni de una cuenta de Docker Hub validada en el equipo local. Por eso el despliegue remoto queda pendiente; el código y la validación local sí están completos.
+> La autenticación en GHCR usa `secrets.GITHUB_TOKEN` con el permiso `packages: write` para publicar y `packages: read` para descargar en los jobs de despliegue. Al ser un token efímero y de alcance mínimo, es más seguro que almacenar credenciales de un registro externo.
 
 ## 5. Verificación local
 
@@ -104,24 +102,23 @@ Resultados obtenidos:
 | Usuario del contenedor | `uid=1000(node) gid=1000(node)`. |
 | Pruebas unitarias | 12 de 12 aprobadas. |
 | Linting | Sin errores. |
+| Puerto 8080 | Disponible y respondiendo con la imagen local. |
+| Puerto 80 | Bloqueado por permisos de Windows; se usa 8081 para producción. |
 | Sintaxis del workflow | `cd.yml` validado con Prettier (parser YAML). |
+| Runner self-hosted | `ryzen5-docker` en línea con etiquetas `self-hosted, Windows, X64, docker, local`. |
 
 ## 6. Evidencias del pipeline en GitHub Actions
 
-> Pendientes de capturar tras configurar Docker Hub, los entornos y el servidor remoto.
-
-| Evidencia | Archivo sugerido |
+| Evidencia | Enlace o archivo |
 | --- | --- |
-| Secretos creados (valores ocultos) | `img/lab52_creacion_secretos.png` |
-| Entornos `staging` y `production` | `img/lab52_environments.png` |
-| Job `build-and-push` exitoso con etiquetas SHA y `latest` | `img/lab52_build_push.png` |
-| Resultado del escaneo Trivy | `img/lab52_trivy.png` |
-| Jobs `deploy-staging` y `deploy-production` exitosos | `img/lab52_deploy.png` |
-| API respondiendo desde la IP pública (`/health`) | `img/lab52_api_ec2.png` |
+| Ejecución exitosa del workflow de CD | Pendiente de la primera ejecución con el workflow actualizado. |
+| Job `build-and-push` con etiquetas SHA y `latest` | Pendiente de captura (`img/lab52_build_push.png`). |
+| Resultado del escaneo Trivy | Pendiente de captura (`img/lab52_trivy.png`). |
+| Jobs `deploy-staging` y `deploy-production` exitosos | Pendiente de captura (`img/lab52_deploy.png`). |
+| API desplegada en staging | Pendiente de captura (`img/lab52_staging.png`). |
+| API desplegada en producción | Pendiente de captura (`img/lab52_produccion.png`). |
 
 ## 7. Prueba de cambio desplegado (Ejercicio 3.4)
-
-Procedimiento pendiente de ejecutar cuando el despliegue esté operativo:
 
 1. Modificar `/health` en `app.js` para incluir una versión:
 
@@ -132,42 +129,44 @@ Procedimiento pendiente de ejecutar cuando el despliegue esté operativo:
    ```
 
 2. Hacer commit y push a `main`; el workflow de CD se dispara automáticamente.
-3. Verificar el cambio en `http://IP_PUBLICA/health`.
-4. **Simulación de fallo**: romper el endpoint `/health` o el arranque del servidor y hacer push. El job de despliegue falla en el health check y el contenedor anterior continúa atendiendo en el puerto 80. Corregir y volver a desplegar.
+3. Verificar el cambio en <http://localhost:8081/health>.
+4. **Simulación de fallo**: romper el endpoint `/health` o el arranque del servidor y hacer push. El job de despliegue falla en el health check y el contenedor anterior continúa atendiendo en el puerto 8081. Corregir y volver a desplegar.
 
 ## 8. Rollback
 
-Gracias al etiquetado con el SHA del commit, cualquier versión publicada puede restaurarse en el servidor remoto:
+Gracias al etiquetado con el SHA del commit, cualquier versión publicada puede restaurarse en el servidor local:
 
 ```bash
+# Autenticarse en GHCR (si el paquete no es público)
+echo "$GH_TOKEN" | docker login ghcr.io -u MariaM0325 --password-stdin
+
 # Reemplazar SHA_ANTERIOR por el SHA del commit al que se desea volver
-docker pull TU_USUARIO/mi-app:SHA_ANTERIOR
+docker pull ghcr.io/mariam0325/mi-app:SHA_ANTERIOR
 docker stop mi-app
 docker rm mi-app
-docker run -d --name mi-app --restart unless-stopped -p 80:3000 TU_USUARIO/mi-app:SHA_ANTERIOR
+docker run -d --name mi-app --restart unless-stopped -p 8081:3000 ghcr.io/mariam0325/mi-app:SHA_ANTERIOR
 ```
 
 El comando de limpieza del pipeline (`docker system prune -f`) elimina imágenes colgantes y contenedores detenidos, pero **no** borra las imágenes etiquetadas con SHA, por lo que siguen disponibles para un rollback.
 
 El health check y el etiquetado por SHA son estrategias complementarias: el primero evita desplegar una versión que no arranca; el segundo permite revertir rápidamente un problema detectado después del despliegue.
 
-## 9. Checklist para completar el despliegue
+## 9. Checklist del despliegue
 
-1. Crear la cuenta en Docker Hub y un **Access Token** (Account Settings > Security > New Access Token).
-2. Crear los secretos `DOCKER_USERNAME` y `DOCKER_PASSWORD` en GitHub.
-3. Crear los entornos `staging` y `production` en **Settings > Environments**; en `production` agregar *Required reviewers*.
-4. Crear los secretos `SSH_HOST`, `SSH_USER` y `SSH_PRIVATE_KEY` en cada entorno.
-5. En el servidor: instalar Docker y `curl`, abrir los puertos 22 (SSH), 80 (producción) y 8080 (staging) en el Security Group, y verificar que el usuario SSH pueda ejecutar Docker.
-6. Hacer commit y push de `Dockerfile`, `.dockerignore` y `.github/workflows/cd.yml`.
-7. Verificar ambos jobs en la pestaña **Actions** y capturar las evidencias de la sección 6.
-8. Ejecutar la prueba de cambio y de fallo de la sección 7.
-9. Actualizar este informe con las capturas y la URL pública final.
+1. ~~Crear entornos `staging` y `production`~~ (completado).
+2. ~~Registrar el runner self-hosted `ryzen5-docker`~~ (completado, en línea).
+3. Hacer commit y push del workflow actualizado y este informe.
+4. Verificar la ejecución exitosa en la pestaña **Actions**.
+5. Validar `http://localhost:8080/health` y `http://localhost:8081/health`.
+6. Ejecutar la prueba de cambio y de fallo de la sección 7.
+7. Capturar las evidencias de la sección 6.
 
 ## 10. Conclusiones
 
 - El build multi-stage y la ejecución como usuario sin privilegios reducen superficie de ataque y tamaño de la imagen final.
 - El health check antes de reemplazar el contenedor evita cortes de servicio por versiones defectuosas.
 - El etiquetado por SHA permite trazabilidad y rollback inmediato; `latest` simplifica la operación diaria.
-- Los GitHub Environments separan credenciales y permiten aprobaciones manuales antes de producción.
+- GHCR con `GITHUB_TOKEN` elimina la necesidad de almacenar credenciales de registro y mantiene permisos mínimos por job.
+- Los GitHub Environments separan la configuración de staging y producción y permiten añadir aprobaciones manuales en el futuro.
 - El escaneo Trivy incorpora seguridad al pipeline y puede endurecerse para bloquear vulnerabilidades críticas.
-- La validación local confirma que la imagen construye y responde correctamente; el despliegue remoto queda a la espera de la infraestructura (Docker Hub y servidor con Docker).
+- El runner self-hosted permite desplegar en un servidor propio con Docker; en un entorno real se recomienda ubicarlo en una máquina dedicada y no en un equipo de uso personal.

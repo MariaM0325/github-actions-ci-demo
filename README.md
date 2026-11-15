@@ -60,21 +60,23 @@ El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en
 
 El workflow [`.github/workflows/cd.yml`](.github/workflows/cd.yml) se ejecuta con `push` y `pull_request` sobre `main`, además de `workflow_dispatch`. Incluye:
 
-1. Build de la imagen Docker multi-stage y push a Docker Hub con etiquetas `github.sha` y `latest`.
+1. Build de la imagen Docker multi-stage y push a **GitHub Container Registry (GHCR)** con etiquetas `github.sha` y `latest`.
 2. Escaneo de vulnerabilidades con Trivy (`CRITICAL,HIGH`).
 3. Despliegue en el entorno `staging` con health check previo.
-4. Despliegue en el entorno `production` (con aprobación opcional) tras validar staging.
+4. Despliegue en el entorno `production` tras validar staging.
 
 El contenedor nuevo se valida en el puerto 3001 y solo reemplaza al activo si `/health` responde 200. Si el health check falla, se conserva la versión anterior.
 
-### Secretos requeridos
+Los jobs de despliegue se ejecutan en un **runner self-hosted** (`ryzen5-docker`) con Docker Desktop. Tras un push a `main`:
 
-| Ámbito | Secretos |
-| ------ | -------- |
-| Repositorio | `DOCKER_USERNAME`, `DOCKER_PASSWORD` |
-| Entornos `staging` / `production` | `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY` |
+- Staging: <http://localhost:8080/health>
+- Producción: <http://localhost:8081/health>
 
-La variable opcional `IMAGE_NAME` permite personalizar el nombre de la imagen (por defecto `USUARIO/mi-app`).
+### Credenciales
+
+No se requieren secretos manuales: GHCR usa el `GITHUB_TOKEN` automático con permisos `packages: write` (build) y `packages: read` (deploy). Los entornos `staging` y `production` ya están creados en el repositorio.
+
+La variable opcional `IMAGE_NAME` permite personalizar el nombre de la imagen (por defecto `ghcr.io/mariam0325/mi-app`).
 
 ## Protección de rama
 
@@ -85,4 +87,4 @@ La rama `main` está protegida: exige que los checks `build-and-test (18)` y `bu
 Puedes encontrar los informes completos con capturas de pantalla y evidencias en los siguientes enlaces:
 
 - [Informe del Laboratorio 5.1 (CI con GitHub Actions)](./INFORME.md)
-- [Informe del Laboratorio 5.2 (CD con Docker y despliegue remoto)](./INFORME-5.2.md)
+- [Informe del Laboratorio 5.2 (CD con Docker, GHCR y runner self-hosted)](./INFORME-5.2.md)
