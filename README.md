@@ -88,7 +88,7 @@ La rama `main` está protegida: exige que los checks `build-and-test (18)` y `bu
 
 ## Documentación del Laboratorio
 
-Puedes encontrar los informes completos con capturas de pantalla y evidencias en los siguientes enlaces:
+Los informes de ambos laboratorios están en el repositorio, con las capturas y las evidencias de cada ejecución:
 
-- [Informe del Laboratorio 5.1 (CI con GitHub Actions)](./INFORME-5.1.md)
-- [Informe del Laboratorio 5.2 (CD con Docker, GHCR y runner self-hosted)](./INFORME.md)
+- [Laboratorio 5.1: Integración Continua con GitHub Actions](./INFORME-5.1.md)
+- [Laboratorio 5.2: Despliegue Continuo con Docker, GHCR y runner self-hosted](./INFORME.md)
