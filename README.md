@@ -1,8 +1,9 @@
 # github-actions-ci-demo
 
 [![CI con Matriz](https://github.com/MariaM0325/github-actions-ci-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/MariaM0325/github-actions-ci-demo/actions/workflows/ci.yml)
+[![CD - Build, Push and Deploy](https://github.com/MariaM0325/github-actions-ci-demo/actions/workflows/cd.yml/badge.svg)](https://github.com/MariaM0325/github-actions-ci-demo/actions/workflows/cd.yml)
 
-Aplicación mínima en **Node.js + Express** con CRUD de usuarios en memoria y pruebas automatizadas mediante **Jest** y **Supertest**, utilizada para demostrar la creación de un pipeline de Integración Continua (CI) con **GitHub Actions**.
+Aplicación mínima en **Node.js + Express** con CRUD de usuarios en memoria y pruebas automatizadas mediante **Jest** y **Supertest**, utilizada para demostrar la creación de un pipeline de Integración Continua (CI) y Despliegue Continuo (CD) con **GitHub Actions** y **Docker**.
 
 ## Tecnologías
 
@@ -34,6 +35,17 @@ npm start
 
 El servidor queda disponible en `http://localhost:3000`.
 
+## Uso con Docker
+
+```bash
+docker build -t mi-app:local .
+docker run -d -p 3000:3000 --name app-local mi-app:local
+curl http://localhost:3000/health
+docker stop app-local && docker rm app-local
+```
+
+La imagen usa un build multi-stage sobre `node:20-alpine`, instala solo dependencias de producción y se ejecuta con el usuario sin privilegios `node`.
+
 ## Pipeline de CI
 
 El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en cada `push` y `pull_request` sobre `main`. Incluye:
@@ -44,12 +56,33 @@ El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en
 4. Linting con ESLint.
 5. Ejecución de las pruebas con Jest y generación del reporte de cobertura, publicado como artifact.
 
+## Pipeline de CD
+
+El workflow [`.github/workflows/cd.yml`](.github/workflows/cd.yml) se ejecuta con `push` y `pull_request` sobre `main`, además de `workflow_dispatch`. Incluye:
+
+1. Build de la imagen Docker multi-stage y push a Docker Hub con etiquetas `github.sha` y `latest`.
+2. Escaneo de vulnerabilidades con Trivy (`CRITICAL,HIGH`).
+3. Despliegue en el entorno `staging` con health check previo.
+4. Despliegue en el entorno `production` (con aprobación opcional) tras validar staging.
+
+El contenedor nuevo se valida en el puerto 3001 y solo reemplaza al activo si `/health` responde 200. Si el health check falla, se conserva la versión anterior.
+
+### Secretos requeridos
+
+| Ámbito | Secretos |
+| ------ | -------- |
+| Repositorio | `DOCKER_USERNAME`, `DOCKER_PASSWORD` |
+| Entornos `staging` / `production` | `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY` |
+
+La variable opcional `IMAGE_NAME` permite personalizar el nombre de la imagen (por defecto `USUARIO/mi-app`).
+
 ## Protección de rama
 
 La rama `main` está protegida: exige que los checks `build-and-test (18)` y `build-and-test (20)` pasen antes de permitir un merge. El force push y la eliminación de la rama están bloqueados. La regla se configuró mediante la API de GitHub.
 
 ## Documentación del Laboratorio
 
-Puedes encontrar el informe completo con capturas de pantalla y evidencias en el siguiente enlace:
+Puedes encontrar los informes completos con capturas de pantalla y evidencias en los siguientes enlaces:
 
-- [Ver informe del laboratorio](./INFORME.md)
+- [Informe del Laboratorio 5.1 (CI con GitHub Actions)](./INFORME.md)
+- [Informe del Laboratorio 5.2 (CD con Docker y despliegue remoto)](./INFORME-5.2.md)
