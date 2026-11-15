@@ -199,7 +199,18 @@ El script de despliegue eliminó el contenedor de validación (`mi-app-staging-n
 
 ### 7.3 Recuperación
 
-Se restauró el puerto 3000 en `server.js` y se hizo un nuevo push. El pipeline volvió a ejecutarse y desplegó correctamente la versión estable en ambos entornos.
+Se restauró el puerto 3000 en `server.js` y se hizo un nuevo push. El pipeline volvió a ejecutarse y desplegó correctamente la versión estable en ambos entornos:
+
+- Commit: `d724dc8` (`fix: restaura el puerto 3000 y documenta la simulacion de fallo`).
+- Ejecución: [CD #43730837239](https://github.com/MariaM0325/github-actions-ci-demo/actions/runs/43730837239), con `build-and-push`, `deploy-staging` y `deploy-production` en ✅ success.
+
+```text
+$ curl http://localhost:8080/health
+{"status":"ok","version":"2.0.0"} HTTP 200
+
+$ curl http://localhost:8081/health
+{"status":"ok","version":"2.0.0"} HTTP 200
+```
 
 ## 8. Rollback
 
@@ -227,7 +238,7 @@ El health check y el etiquetado por SHA son estrategias complementarias: el prim
 3. ~~Hacer commit y push del workflow actualizado y este informe~~ (completado, commit `bd13538`).
 4. ~~Verificar la ejecución exitosa en la pestaña Actions~~ (completado).
 5. ~~Validar `http://localhost:8080/health` y `http://localhost:8081/health`~~ (completado, ambos 200).
-6. Ejecutar la prueba de cambio y de fallo de la sección 7.
+6. ~~Ejecutar la prueba de cambio y de fallo de la sección 7~~ (completado; ver 7.1, 7.2 y 7.3).
 7. Capturar las evidencias de la sección 6.3.
 
 ## 10. Conclusiones
