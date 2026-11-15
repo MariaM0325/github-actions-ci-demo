@@ -90,5 +90,5 @@ La rama `main` está protegida: exige que los checks `build-and-test (18)` y `bu
 
 Puedes encontrar los informes completos con capturas de pantalla y evidencias en los siguientes enlaces:
 
-- [Informe del Laboratorio 5.1 (CI con GitHub Actions)](./INFORME.md)
-- [Informe del Laboratorio 5.2 (CD con Docker, GHCR y runner self-hosted)](./INFORME-5.2.md)
+- [Informe del Laboratorio 5.1 (CI con GitHub Actions)](./INFORME-5.1.md)
+- [Informe del Laboratorio 5.2 (CD con Docker, GHCR y runner self-hosted)](./INFORME.md)
