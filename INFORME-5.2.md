@@ -109,14 +109,47 @@ Resultados obtenidos:
 
 ## 6. Evidencias del pipeline en GitHub Actions
 
-| Evidencia | Enlace o archivo |
+### 6.1 Ejecución exitosa
+
+- Workflow: [CD - Build, Push and Deploy #43729673176](https://github.com/MariaM0325/github-actions-ci-demo/actions/runs/43729673176)
+- Commit desplegado: `bd13538b781035b33b09d2cdaaebf811e5bf1d2d`
+- Resultado: `success` en los tres jobs.
+
+| Job | Duración | Resultado | Enlace |
+| --- | --- | --- | --- |
+| `build-and-push` | 45 s | ✅ success | [job 132859126086](https://github.com/MariaM0325/github-actions-ci-demo/actions/runs/43729673176/job/132859126086) |
+| `deploy-staging` | 42 s | ✅ success | [job 132859354955](https://github.com/MariaM0325/github-actions-ci-demo/actions/runs/43729673176/job/132859354955) |
+| `deploy-production` | 34 s | ✅ success | [job 132859573886](https://github.com/MariaM0325/github-actions-ci-demo/actions/runs/43729673176/job/132859573886) |
+
+El job `build-and-push` publicó la imagen `ghcr.io/mariam0325/mi-app` con las etiquetas `bd13538b781035b33b09d2cdaaebf811e5bf1d2d` y `latest`, descargó la imagen y ejecutó el escaneo Trivy sin bloquear el pipeline (`exit-code: 0`).
+
+### 6.2 Verificación en el equipo local
+
+```text
+$ docker ps
+NAMES            IMAGE                              PORTS                                         STATUS
+mi-app           ghcr.io/mariam0325/mi-app:latest   0.0.0.0:8081->3000/tcp, [::]:8081->3000/tcp   Up
+mi-app-staging   ghcr.io/mariam0325/mi-app:latest   0.0.0.0:8080->3000/tcp, [::]:8080->3000/tcp   Up
+
+$ curl http://localhost:8080/health
+{"status":"ok"} HTTP 200
+
+$ curl http://localhost:8081/health
+{"status":"ok"} HTTP 200
+
+$ curl http://localhost:8081/users
+[{"id":1,"name":"Alice"},{"id":2,"name":"Bob"}] HTTP 200
+```
+
+### 6.3 Capturas pendientes
+
+| Evidencia | Archivo sugerido |
 | --- | --- |
-| Ejecución exitosa del workflow de CD | Pendiente de la primera ejecución con el workflow actualizado. |
-| Job `build-and-push` con etiquetas SHA y `latest` | Pendiente de captura (`img/lab52_build_push.png`). |
-| Resultado del escaneo Trivy | Pendiente de captura (`img/lab52_trivy.png`). |
-| Jobs `deploy-staging` y `deploy-production` exitosos | Pendiente de captura (`img/lab52_deploy.png`). |
-| API desplegada en staging | Pendiente de captura (`img/lab52_staging.png`). |
-| API desplegada en producción | Pendiente de captura (`img/lab52_produccion.png`). |
+| Job `build-and-push` con etiquetas SHA y `latest` | `img/lab52_build_push.png` |
+| Resultado del escaneo Trivy | `img/lab52_trivy.png` |
+| Jobs `deploy-staging` y `deploy-production` exitosos | `img/lab52_deploy.png` |
+| API desplegada en staging | `img/lab52_staging.png` |
+| API desplegada en producción | `img/lab52_produccion.png` |
 
 ## 7. Prueba de cambio desplegado (Ejercicio 3.4)
 
@@ -155,11 +188,11 @@ El health check y el etiquetado por SHA son estrategias complementarias: el prim
 
 1. ~~Crear entornos `staging` y `production`~~ (completado).
 2. ~~Registrar el runner self-hosted `ryzen5-docker`~~ (completado, en línea).
-3. Hacer commit y push del workflow actualizado y este informe.
-4. Verificar la ejecución exitosa en la pestaña **Actions**.
-5. Validar `http://localhost:8080/health` y `http://localhost:8081/health`.
+3. ~~Hacer commit y push del workflow actualizado y este informe~~ (completado, commit `bd13538`).
+4. ~~Verificar la ejecución exitosa en la pestaña Actions~~ (completado).
+5. ~~Validar `http://localhost:8080/health` y `http://localhost:8081/health`~~ (completado, ambos 200).
 6. Ejecutar la prueba de cambio y de fallo de la sección 7.
-7. Capturar las evidencias de la sección 6.
+7. Capturar las evidencias de la sección 6.3.
 
 ## 10. Conclusiones
 
