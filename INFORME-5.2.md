@@ -151,19 +151,55 @@ $ curl http://localhost:8081/users
 | API desplegada en staging | `img/lab52_staging.png` |
 | API desplegada en producción | `img/lab52_produccion.png` |
 
-## 7. Prueba de cambio desplegado (Ejercicio 3.4)
+## 7. Prueba de cambio desplegado y simulación de fallo (Ejercicio 3.4)
 
-1. Modificar `/health` en `app.js` para incluir una versión:
+### 7.1 Cambio desplegado
 
-   ```javascript
-   app.get('/health', (req, res) => {
-     res.status(200).json({ status: 'ok', version: '2.0.0' });
-   });
-   ```
+Se modificó `/health` en `app.js` para incluir la versión y se actualizó la prueba correspondiente:
 
-2. Hacer commit y push a `main`; el workflow de CD se dispara automáticamente.
-3. Verificar el cambio en <http://localhost:8081/health>.
-4. **Simulación de fallo**: romper el endpoint `/health` o el arranque del servidor y hacer push. El job de despliegue falla en el health check y el contenedor anterior continúa atendiendo en el puerto 8081. Corregir y volver a desplegar.
+```javascript
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', version: '2.0.0' });
+});
+```
+
+- Commit: `461a46a` (`feat: agrega version 2.0.0 al endpoint de health`).
+- Ejecución: [CD #43730324264](https://github.com/MariaM0325/github-actions-ci-demo/actions/runs/43730324264), exitosa.
+- Verificación en producción:
+
+```text
+$ curl http://localhost:8081/health
+{"status":"ok","version":"2.0.0"} HTTP 200
+```
+
+### 7.2 Simulación de fallo del health check
+
+Se cambió temporalmente el puerto interno del servidor a 4000 (`const PORT = process.env.PORT || 4000`) y se hizo push:
+
+- Commit: `eefe997` (`test: simula fallo en el health check del despliegue`).
+- Ejecución: [CD #43730583071](https://github.com/MariaM0325/github-actions-ci-demo/actions/runs/43730583071).
+  - `build-and-push`: ✅ success.
+  - `deploy-staging`: ❌ failure en el paso "Desplegar en staging" (health check en 3001).
+  - `deploy-production`: ⏭️ skipped por depender de staging.
+- Los contenedores anteriores **siguieron sirviendo** la versión estable:
+
+```text
+$ curl http://localhost:8080/health
+{"status":"ok","version":"2.0.0"} HTTP 200
+
+$ curl http://localhost:8081/health
+{"status":"ok","version":"2.0.0"} HTTP 200
+
+$ docker ps
+mi-app           Up 2 minutes   0.0.0.0:8081->3000/tcp
+mi-app-staging   Up 3 minutes   0.0.0.0:8080->3000/tcp
+```
+
+El script de despliegue eliminó el contenedor de validación (`mi-app-staging-new`) y terminó con código 1 sin tocar los contenedores activos. El gate de staging impidió además que una imagen defectuosa llegara a producción.
+
+### 7.3 Recuperación
+
+Se restauró el puerto 3000 en `server.js` y se hizo un nuevo push. El pipeline volvió a ejecutarse y desplegó correctamente la versión estable en ambos entornos.
 
 ## 8. Rollback
 
